@@ -1,0 +1,56 @@
+# GUIDE to get Quest2 working with HotSpot of Intel AX200 PCIe and Win10 (Tested and working with 3 different pc hardware with TP-LINK AX3000)
+# By AdrenSnyder :-)
+# 
+# This script enable wireless scan, enable hotspot (you have to previously configure it) and disable scan to reduce latency
+#
+# USAGE: After you have done all the next things (-->) needed to get it work you only need to:
+# 1) Start the link to the batch file (admin priviledge required)
+# 2) Connect 1 mobile phone to HotSpot
+# 3) Connect Quest2. Now you should connect at 600/1200mbps with 1-5ms latency (ping to ip of the quest2. Not the VD latency)
+#
+# YOU HAVE TO DO THIS NEXT THINGS ONLY ONE TIME TO ADAPT THE SCRIPT TO YOUR HARDWARE AND AUTORIZE POWERSHELL TO START IT
+#
+# --> Copy this entire pastebin to a file and name it Start_HotSpot_Quest2.ps1
+#
+# --> Download and install last IT drivers from intel:
+# https://downloadcenter.intel.com/download/30113/Intel-PROSet-Wireless-Software-and-Drivers-for-IT-Admins
+#
+# --> I do some mods in the Advanced driver section of device manager. 
+# - Block global scan: Always
+# - Fat channel incompatible: Enabled
+# - Increase throughput: Enabled
+# - Energy saving: no SMPS
+# - Mixed mode: CTS-to-self enabled
+#
+# --> Configure the HotSpot with SSID, password and 5Ghz channel
+#
+# --> Start a powershell with admin priviledges one time to enable script execution. Execute this commands:
+# Set-ExecutionPolicy Unrestricted
+# Set-executionpolicy -Scope currentuser -ExecutionPolicy Unrestricted
+#
+# --> NOTE: If it give a warning when you start the script you have to unblock the file
+# Unblock-File Start_HotSpot_Quest2.ps1
+# 
+# --> Create a batch (Ex. Start_HotSpot_Quest2.bat) with inside:
+# powershell ./Start_HotSpot_Quest2.ps1
+#
+# --> Create a link to the batch file and give it Admin Rights.
+# 
+# --> IMPORTANT NOTE: In the part "Enable Scan" and "Disable Scan" you have to change "Wi-fi" with your Wireless Adapter Name to get script work
+#
+# END GUIDE
+
+# Declare variable for control the HotSpot
+$connectionProfile = [Windows.Networking.Connectivity.NetworkInformation,Windows.Networking.Connectivity,ContentType=WindowsRuntime]::GetInternetConnectionProfile()
+$tetheringManager = [Windows.Networking.NetworkOperators.NetworkOperatorTetheringManager,Windows.Networking.NetworkOperators,ContentType=WindowsRuntime]::CreateFromConnectionProfile($connectionProfile)
+
+# Enable Scan (need it to enable HotSpot)
+Start-Sleep -Seconds 2
+netsh wlan set autoconfig enabled=yes interface="Wi-Fi"
+
+# Start Mobile Hotspot
+$tetheringManager.StartTetheringAsync()
+Start-Sleep -Seconds 2
+
+# Disable Scan (need it to remove latency when Windows do a scheduled network scan)
+netsh wlan set autoconfig enabled=no interface="Wi-Fi"
